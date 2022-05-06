@@ -194,8 +194,6 @@ namespace parser_helper
                 vars[i] = func.Vars[i].Item2;
             }
 
-            // Проверка наличия объявленных переменных и добавление функции
-            //func.Root.CheckTree(vars);
             if (!_funcs.TryAdd(id, func))
             {
                 _funcs.Remove(id);
