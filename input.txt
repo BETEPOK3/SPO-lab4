@@ -1,23 +1,27 @@
-num 	/[0-9]+(\.[0-9]*)?([eE][\+\-][0-9]+)?/	{ parser.ParserHelper.ConvertToNum(text) } :: dynamic
+num 	/[0-9]+(\.[0-9]*)?([eE][\+\-][0-9]+)?/	{ parser_helper.ParserHelper.ConvertToNode(text) } :: dynamic
 id		/[a-z_][a-z_0-9]*/						{ text } :: string
-param	/:[a-z]+/								{ text } :: string
+parami	/:i/
+paramt	/:t/
 lparen	/\(/
 rparen	/\)/
-comma	/,/
-plus	/\+/									{ text } :: string
-minus	/\-/									{ text } :: string
-mult	/\*/									{ text } :: string
-divide	/\//									{ text } :: string
-power	/\^/									{ text } :: string
-equal	/=/
+comma	/\,/
+plus	/\+/
+minus	/\-/
+mult	/\*/
+divide	/\//
+power	/\^/
+equal	/\=/
 		/ +/
 
 %%
+%top {
+using parser_helper;
+}
 
-S	->	param id lparen D1 rparen equal E		{ (_1[1] == 'i' && _1.Length == 2) ? ParserHelper.AddFunc(_2, new Func(_7, _4)) : throw new ApplicationException($"Parameter should be ':i', not '{_1}'") }
-	|	param id equal E						{ (_1[1] == 'i' && _1.Length == 2) ? ParserHelper.AddVar(_2, _4.SolveTree()) : throw new ApplicationException($"Parameter should be ':i', not '{_1}'") }
-	|	param id lparen rparen					{ (_1[1] == 't' && _1.Length == 2) ? ParserHelper.GetFuncTypes(_2) : throw new ApplicationException($"Parameter should be ':t', not '{_1}'") }
-	|	param E									{ (_1[1] == 't' && _1.Length == 2) ? ParserHelper.ConvertTypeToString(_2.SolveTree().GetType()) : throw new ApplicationException($"Parameter should be ':t', not '{_1}'") }
+S	->	parami id lparen D1 rparen equal E		{ ParserHelper.AddFunc(_2, new Func(_7, _4)) }
+	|	parami id equal E						{ ParserHelper.AddVar(_2, _4.SolveTree()) }
+	|	paramt id lparen rparen					{ ParserHelper.GetFuncTypes(_2) }
+	|	paramt E								{ ParserHelper.ConvertTypeToString(_2.SolveTree().GetType()) }
 	|	E										{ $"Tree: {_1.GetTree()}\nValue: {_1.SolveTree()}" }
 	:: { string }
 	;
@@ -25,28 +29,28 @@ D1	->	id id comma D1							{ new List<(Type, string)>(_4){ (ParserHelper.GetType
 	|	id id 									{ new List<(Type, string)>(){ (ParserHelper.GetTypeFromString(_1), _2) } }
 	:: { List<(Type, string)> }
 	;
-E	->	E plus T								{ new Node((TokenType.Tok_plus, _2), new Node[]{ _1, _3 }) }
-	|	E minus T								{ new Node((TokenType.Tok_minus, _2), new Node[]{ _1, _3 }) }
+E	->	E plus T								{ new NodeBinary('+', new INode[] { _1, _3 }) }
+	|	E minus T								{ new NodeBinary('-', new INode[] { _1, _3 }) }
 	|	T										{ _1 }
-	:: { Node }
+	:: { INode }
 	;
-T	->	T mult F								{ new Node((TokenType.Tok_mult, _2), new Node[]{ _1, _3 }) }
-	|	T divide F								{ new Node((TokenType.Tok_divide, _2), new Node[]{ _1, _3}) }
+T	->	T mult F								{ new NodeBinary('*', new INode[] { _1, _3 }) }
+	|	T divide F								{ new NodeBinary('/', new INode[] { _1, _3 }) }
 	|	F										{ _1 }
-	:: { Node }
+	:: { INode }
 	;
-F	->	V power F								{ new Node((TokenType.Tok_power, _2), new Node[]{ _1, _3 }) }
+F	->	V power F								{ new NodeBinary('^', new INode[] { _1, _3 }) }
 	|	V										{ _1 }
-	:: { Node }
+	:: { INode }
 	;
 V	->	lparen E rparen							{ _2 }
-	|	id lparen D2 rparen						{ new Node((TokenType.Tok_id, _1), _3.ToArray()) }
-	|	id										{ new Node((TokenType.Tok_id, _1)) }
-	|	num										{ new Node((TokenType.Tok_num, _1)) }
-	|	minus V									{ new Node((TokenType.Tok_num, -_2)) }
-	:: { Node }
+	|	id lparen D2 rparen						{ new NodeFunction(_1, _3.ToArray()) }
+	|	id										{ new NodeVar(_1) }
+	|	num										{ _1 }
+	|	minus V									{ new NodeUnary(_2) }
+	:: { INode }
 	;
-D2	->	E comma D2								{ new List<Node>(_3){ _1 } }
-	|	E										{ new List<Node>(){ _1 } }
-	:: { List<Node> }
+D2	->	E comma D2								{ new List<INode>(_3){ _1 } }
+	|	E										{ new List<INode>(){ _1 } }
+	:: { List<INode> }
 	;

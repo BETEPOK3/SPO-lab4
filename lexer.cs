@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace lexer {
 public enum TokenType : uint {
-  eof, Tok_lparen,Tok_rparen,Tok_mult,Tok_plus,Tok_comma,Tok_minus,Tok_divide,Tok_equal,Tok_power,Tok_id,Tok_num,Tok_param
+  eof, Tok_lparen,Tok_rparen,Tok_mult,Tok_plus,Tok_comma,Tok_minus,Tok_divide,Tok_equal,Tok_power,Tok_id,Tok_num,Tok_parami,Tok_paramt
 }
 
 class Buf<T> : IEnumerator<T> {
@@ -61,19 +61,7 @@ public class Lexer {
       if(!inputBuf.MoveNext()) goto end;
       curCh = inputBuf.Current;
       tmp += curCh;
-      if(curCh == ' ') goto state_1;
- else if(curCh == '(') goto state_2;
- else if(curCh == ')') goto state_3;
- else if(curCh == '*') goto state_4;
- else if(curCh == '+') goto state_5;
- else if(curCh == ',') goto state_6;
- else if(curCh == '-') goto state_7;
- else if(curCh == '/') goto state_8;
- else if(curCh == ':') goto state_9;
- else if(curCh == '=') goto state_10;
- else if(curCh == '^') goto state_11;
- else if(curCh == '_'||(curCh >= 'a' && curCh <= 'z')) goto state_12;
- else if((curCh >= '0' && curCh <= '9')) goto state_13;
+      if(curCh == ' ') goto state_1; else if(curCh == '(') goto state_2; else if(curCh == ')') goto state_3; else if(curCh == '*') goto state_4; else if(curCh == '+') goto state_5; else if(curCh == ',') goto state_6; else if(curCh == '-') goto state_7; else if(curCh == '/') goto state_8; else if(curCh == ':') goto state_9; else if(curCh == '=') goto state_10; else if(curCh == '^') goto state_11; else if(curCh == '_'||(curCh >= 'a' && curCh <= 'z')) goto state_12; else if((curCh >= '0' && curCh <= '9')) goto state_13;
       goto end;
     state_1:
       buf += tmp;
@@ -160,7 +148,7 @@ public class Lexer {
       if(!inputBuf.MoveNext()) goto end;
       curCh = inputBuf.Current;
       tmp += curCh;
-      if((curCh >= 'a' && curCh <= 'z')) goto state_18;
+      if(curCh == 'i') goto state_18; else if(curCh == 't') goto state_19;
       goto end;
     state_10:
       buf += tmp;
@@ -200,9 +188,7 @@ public class Lexer {
       if(!inputBuf.MoveNext()) goto end;
       curCh = inputBuf.Current;
       tmp += curCh;
-      if(curCh == '.') goto state_14;
- else if(curCh == 'E'||curCh == 'e') goto state_15;
- else if((curCh >= '0' && curCh <= '9')) goto state_13;
+      if(curCh == '.') goto state_14; else if(curCh == 'E'||curCh == 'e') goto state_15; else if((curCh >= '0' && curCh <= '9')) goto state_13;
       goto end;
     state_14:
       buf += tmp;
@@ -212,8 +198,7 @@ public class Lexer {
       if(!inputBuf.MoveNext()) goto end;
       curCh = inputBuf.Current;
       tmp += curCh;
-      if(curCh == 'E'||curCh == 'e') goto state_15;
- else if((curCh >= '0' && curCh <= '9')) goto state_14;
+      if(curCh == 'E'||curCh == 'e') goto state_15; else if((curCh >= '0' && curCh <= '9')) goto state_14;
       goto end;
     state_15:
       
@@ -247,7 +232,17 @@ public class Lexer {
       if(!inputBuf.MoveNext()) goto end;
       curCh = inputBuf.Current;
       tmp += curCh;
-      if((curCh >= 'a' && curCh <= 'z')) goto state_18;
+      
+      goto end;
+    state_19:
+      buf += tmp;
+      tmp = "";
+      accSt = 19;
+      
+      if(!inputBuf.MoveNext()) goto end;
+      curCh = inputBuf.Current;
+      tmp += curCh;
+      
       goto end;
     end:
     if (tmp.Length > 0) {
@@ -268,11 +263,11 @@ public class Lexer {
         goto start;
       case 4:
         if (debug) Console.Error.WriteLine($"Lexed token mult: \"{text}\"");
-        yield return (TokenType.Tok_mult,  text );
+        yield return (TokenType.Tok_mult, null);
         goto start;
       case 5:
         if (debug) Console.Error.WriteLine($"Lexed token plus: \"{text}\"");
-        yield return (TokenType.Tok_plus,  text );
+        yield return (TokenType.Tok_plus, null);
         goto start;
       case 6:
         if (debug) Console.Error.WriteLine($"Lexed token comma: \"{text}\"");
@@ -280,11 +275,11 @@ public class Lexer {
         goto start;
       case 7:
         if (debug) Console.Error.WriteLine($"Lexed token minus: \"{text}\"");
-        yield return (TokenType.Tok_minus,  text );
+        yield return (TokenType.Tok_minus, null);
         goto start;
       case 8:
         if (debug) Console.Error.WriteLine($"Lexed token divide: \"{text}\"");
-        yield return (TokenType.Tok_divide,  text );
+        yield return (TokenType.Tok_divide, null);
         goto start;
       case 10:
         if (debug) Console.Error.WriteLine($"Lexed token equal: \"{text}\"");
@@ -292,7 +287,7 @@ public class Lexer {
         goto start;
       case 11:
         if (debug) Console.Error.WriteLine($"Lexed token power: \"{text}\"");
-        yield return (TokenType.Tok_power,  text );
+        yield return (TokenType.Tok_power, null);
         goto start;
       case 12:
         if (debug) Console.Error.WriteLine($"Lexed token id: \"{text}\"");
@@ -300,19 +295,23 @@ public class Lexer {
         goto start;
       case 13:
         if (debug) Console.Error.WriteLine($"Lexed token num: \"{text}\"");
-        yield return (TokenType.Tok_num,  parser.ParserHelper.ConvertToNum(text) );
+        yield return (TokenType.Tok_num,  parser_helper.ParserHelper.ConvertToNode(text) );
         goto start;
       case 14:
         if (debug) Console.Error.WriteLine($"Lexed token num: \"{text}\"");
-        yield return (TokenType.Tok_num,  parser.ParserHelper.ConvertToNum(text) );
+        yield return (TokenType.Tok_num,  parser_helper.ParserHelper.ConvertToNode(text) );
         goto start;
       case 17:
         if (debug) Console.Error.WriteLine($"Lexed token num: \"{text}\"");
-        yield return (TokenType.Tok_num,  parser.ParserHelper.ConvertToNum(text) );
+        yield return (TokenType.Tok_num,  parser_helper.ParserHelper.ConvertToNode(text) );
         goto start;
       case 18:
-        if (debug) Console.Error.WriteLine($"Lexed token param: \"{text}\"");
-        yield return (TokenType.Tok_param,  text );
+        if (debug) Console.Error.WriteLine($"Lexed token parami: \"{text}\"");
+        yield return (TokenType.Tok_parami, null);
+        goto start;
+      case 19:
+        if (debug) Console.Error.WriteLine($"Lexed token paramt: \"{text}\"");
+        yield return (TokenType.Tok_paramt, null);
         goto start;
     }
     if (inputBuf.Empty) {
@@ -323,4 +322,4 @@ public class Lexer {
     throw new ApplicationException("Unexpected input: " + buf + tmp);
   }
 }
-}
+}

@@ -21,6 +21,10 @@ namespace СПО_3
                 {
                     Console.WriteLine(exc.Message);
                 }
+                catch (DivideByZeroException exc)
+                {
+                    Console.WriteLine(exc.Message);
+                }
                 Console.WriteLine();
                 Console.Write("Input: ");
                 strIn = Console.ReadLine();
